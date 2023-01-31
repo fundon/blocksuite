@@ -75,8 +75,7 @@ function filterSelectedBlock(
   for (let i = 0; i < len; i++) {
     const block = blocks[i];
     const rect = block.getBoundingClientRect();
-    const isIntersects = intersects(rect, selectionRect, offset);
-    if (isIntersects) {
+    if (intersects(rect, selectionRect, offset)) {
       const model = getModelByElement(block);
       const currentDepth = model.depth as number;
       const currentIndex = model.index as number;
@@ -130,6 +129,7 @@ function filterSelectedBlock(
   return results;
 }
 
+// find the currently focused block and its children
 function filterSelectedBlockByIndex(
   blockCache: Map<Element, DOMRect>,
   focusedBlockIndex: number,
@@ -154,8 +154,7 @@ function filterSelectedBlockByIndex(
     assertExists(richText);
     const rect = richText.getBoundingClientRect();
     if (flag) {
-      const isIntersects = intersects(rect, selectionRect, offset);
-      if (isIntersects) {
+      if (intersects(rect, selectionRect, offset)) {
         blockRect = block.getBoundingClientRect();
         results.push(block);
         flag = false;
@@ -163,8 +162,7 @@ function filterSelectedBlockByIndex(
     } else {
       if (blockRect) {
         // sometimes: rect.bottom = 467.2372016906738, selectionRect.bottom = 467.23719024658203
-        const inside = contains(rect, blockRect, { x: 0, y: 1 });
-        if (inside) {
+        if (contains(rect, blockRect, { x: 0, y: 1 })) {
           results.push(block);
         } else {
           if (focusedBlockIndex >= 0) {
@@ -181,27 +179,40 @@ function filterSelectedBlockByIndex(
   return results;
 }
 
-// Backward: any level can be reached
-// Forward: only the first level can be reached
-//
 // The depth of the block in the page is 1 by default
 // See `getAllowSelectedBlocks` in packages/blocks/src/page-block/default/utils.ts
-function filterSelectedBlockByDepthAndParentIndex(
-  selectedBlocks: Element[],
-  depth: number,
-  parentIndex?: number
-) {
+// function filterSelectedBlockByDepthAndParentIndex(
+//   selectedBlocks: Element[],
+//   depth: number,
+//   parentIndex?: number
+// ) {
+//   return selectedBlocks.filter((block, index) => {
+//     if (index === 0) return true;
+//     const model = getModelByElement(block);
+//     const currentParentIndex = model.parentIndex;
+//     if (currentParentIndex === parentIndex) {
+//       return true;
+//     } else {
+//       const currentDepth = model.depth || 1;
+//       if (currentDepth < depth) {
+//         parentIndex = currentParentIndex;
+//         depth = currentDepth;
+//         return true;
+//       } else {
+//         return false;
+//       }
+//     }
+//   });
+// }
+function clearSubtrees(selectedBlocks: Element[], left: number) {
   return selectedBlocks.filter((block, index) => {
     if (index === 0) return true;
-    const model = getModelByElement(block);
-    const currentParentIndex = model.parentIndex;
-    if (currentParentIndex === parentIndex) {
+    const currentLeft = block.getBoundingClientRect().left;
+    if (left === currentLeft) {
       return true;
     } else {
-      const currentDepth = model.depth || 1;
-      if (currentDepth < depth) {
-        parentIndex = currentParentIndex;
-        depth = currentDepth;
+      if (currentLeft < left) {
+        left = currentLeft;
         return true;
       } else {
         return false;
@@ -435,16 +446,13 @@ export class DefaultSelectionManager {
     return containerOffset;
   }
 
-  // `CMD-A`
   private _setSelectedBlocks = (selectedBlocks: Element[]) => {
     this.state.selectedBlocks = selectedBlocks;
     if (selectedBlocks.length) {
       const { blockCache } = this.state;
-      const model = getModelByElement(selectedBlocks[0]);
-      const rects = filterSelectedBlockByDepthAndParentIndex(
+      const rects = clearSubtrees(
         selectedBlocks,
-        model.depth || 1,
-        model.parentIndex
+        selectedBlocks[0].getBoundingClientRect().left
       ).map(block => blockCache.get(block) as DOMRect);
       this._signals.updateSelectedRects.emit(rects);
     } else {
@@ -760,6 +768,7 @@ export class DefaultSelectionManager {
     this._setSelectedBlocks(selectedBlocks);
   }
 
+  // `CMD-A`
   selectBlocksByRect(hitRect: DOMRect) {
     this.state.refreshRichTextBoundsCache(this._mouseRoot);
 
