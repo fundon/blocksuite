@@ -258,22 +258,24 @@ export class Renderer implements SurfaceViewport {
   private _render() {
     const { ctx, gridManager, viewportBounds, width, height, rc, zoom } = this;
     const dpr = window.devicePixelRatio;
+    const scale = zoom * dpr;
+    const matrix = new DOMMatrix().scaleSelf(scale);
 
     ctx.clearRect(0, 0, width * dpr, height * dpr);
     ctx.save();
 
-    ctx.setTransform(zoom * dpr, 0, 0, zoom * dpr, 0, 0);
+    ctx.setTransform(scale, 0, 0, scale, 0, 0);
 
     const elements = gridManager.search(viewportBounds);
     for (const element of elements) {
-      const dx = element.x - viewportBounds.x;
-      const dy = element.y - viewportBounds.y;
       ctx.save();
-      ctx.translate(dx, dy);
+
       const localRecord = element.localRecord;
       if (intersects(element, viewportBounds) && localRecord.display) {
         ctx.globalAlpha = localRecord.opacity;
-        element.render(ctx, rc);
+        const dx = element.x - viewportBounds.x;
+        const dy = element.y - viewportBounds.y;
+        element.render(ctx, matrix.translate(dx, dy), rc);
       }
 
       ctx.restore();

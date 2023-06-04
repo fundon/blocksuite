@@ -68,12 +68,26 @@ export class BrushElement extends SurfaceElement<IBrush> {
     return false;
   }
 
-  override render(ctx: CanvasRenderingContext2D) {
-    const stroke = getSolidStrokePoints(this.points, this.lineWidth);
+  override render(ctx: CanvasRenderingContext2D, matrix: DOMMatrix) {
+    const {
+      rotate,
+      points,
+      lineWidth,
+      color,
+      widthAndHeight: [w, h],
+    } = this;
+    const cx = w / 2;
+    const cy = h / 2;
+
+    ctx.setTransform(
+      matrix.translateSelf(cx, cy).rotateSelf(rotate).translateSelf(-cx, -cy)
+    );
+
+    const stroke = getSolidStrokePoints(points, lineWidth);
     const commands = getSvgPathFromStroke(stroke);
     const path = new Path2D(commands);
 
-    ctx.fillStyle = this.computedValue(this.color);
+    ctx.fillStyle = this.computedValue(color);
     ctx.fill(path);
   }
 
