@@ -264,7 +264,7 @@ export class Renderer implements SurfaceViewport {
     ctx.clearRect(0, 0, width * dpr, height * dpr);
     ctx.save();
 
-    ctx.setTransform(scale, 0, 0, scale, 0, 0);
+    ctx.setTransform(matrix);
 
     const elements = gridManager.search(viewportBounds);
     for (const element of elements) {
