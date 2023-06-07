@@ -4,6 +4,7 @@ import type { Disposable } from '@blocksuite/store';
 import { computePosition, flip, offset } from '@floating-ui/dom';
 import { css, html } from 'lit';
 
+import type { IPoint } from '../../../std.js';
 import type { Selectable } from '../selection-manager.js';
 import { getSelectionBoxBound, getXYWH, isTopLevelBlock } from '../utils.js';
 
@@ -57,18 +58,37 @@ export function getSelectedRect(
   );
 }
 
-export function getSelectableBounds(
-  selected: Selectable[]
-): Map<string, Bound> {
-  const bounds = new Map<string, Bound>();
+export function getSelectableBounds(selected: Selectable[]): Map<
+  string,
+  {
+    bound: Bound;
+    flip: IPoint;
+  }
+> {
+  const bounds = new Map<
+    string,
+    {
+      bound: Bound;
+      flip: IPoint;
+    }
+  >();
   for (const s of selected) {
     let bound: Bound;
+    const flip = {
+      x: 1,
+      y: 1,
+    };
     if (isTopLevelBlock(s)) {
       bound = Bound.deserialize(getXYWH(s));
     } else {
       bound = new Bound(s.x, s.y, s.w, s.h);
+      flip.x = s.flipX ?? 1;
+      flip.y = s.flipY ?? 1;
     }
-    bounds.set(s.id, bound);
+    bounds.set(s.id, {
+      bound,
+      flip,
+    });
   }
   return bounds;
 }
