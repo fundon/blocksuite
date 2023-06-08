@@ -63,6 +63,7 @@ export function getSelectableBounds(selected: Selectable[]): Map<
   {
     bound: Bound;
     flip: IPoint;
+    rotate: number;
   }
 > {
   const bounds = new Map<
@@ -70,6 +71,7 @@ export function getSelectableBounds(selected: Selectable[]): Map<
     {
       bound: Bound;
       flip: IPoint;
+      rotate: number;
     }
   >();
   for (const s of selected) {
@@ -78,16 +80,19 @@ export function getSelectableBounds(selected: Selectable[]): Map<
       x: 1,
       y: 1,
     };
+    let rotate = 0;
     if (isTopLevelBlock(s)) {
       bound = Bound.deserialize(getXYWH(s));
     } else {
       bound = new Bound(s.x, s.y, s.w, s.h);
       flip.x = s.flipX ?? 1;
       flip.y = s.flipY ?? 1;
+      rotate = s.rotate;
     }
     bounds.set(s.id, {
       bound,
       flip,
+      rotate,
     });
   }
   return bounds;
