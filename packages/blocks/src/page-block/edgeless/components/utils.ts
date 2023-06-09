@@ -44,19 +44,26 @@ export function getSelectedRect(
   return selected.reduce((bounds, selectable, index) => {
     const rect = getSelectionBoxBound(viewport, selectable.xywh);
     const rotate = isTopLevelBlock(selectable) ? 0 : selectable.rotate ?? 0;
+    // a, b, c, d
+    let a = new DOMPoint(rect.left, rect.top);
+    let b = new DOMPoint(rect.right, rect.top);
+    let c = new DOMPoint(rect.right, rect.bottom);
+    let d = new DOMPoint(rect.left, rect.bottom);
 
-    const cx = (rect.left + rect.right) / 2;
-    const cy = (rect.top + rect.bottom) / 2;
+    if (rotate) {
+      const cx = (a.x + c.x) / 2;
+      const cy = (a.y + c.y) / 2;
 
-    const matrix = new DOMMatrix()
-      .translateSelf(cx, cy)
-      .rotateSelf(rotate)
-      .translateSelf(-cx, -cy);
+      const matrix = new DOMMatrix()
+        .translateSelf(cx, cy)
+        .rotateSelf(rotate)
+        .translateSelf(-cx, -cy);
 
-    const a = new DOMPoint(rect.left, rect.top).matrixTransform(matrix);
-    const b = new DOMPoint(rect.right, rect.top).matrixTransform(matrix);
-    const c = new DOMPoint(rect.right, rect.bottom).matrixTransform(matrix);
-    const d = new DOMPoint(rect.left, rect.bottom).matrixTransform(matrix);
+      a = a.matrixTransform(matrix);
+      b = b.matrixTransform(matrix);
+      c = c.matrixTransform(matrix);
+      d = d.matrixTransform(matrix);
+    }
 
     let minX = Math.min(a.x, b.x, c.x, d.x);
     let maxX = Math.max(a.x, b.x, c.x, d.x);
@@ -65,8 +72,8 @@ export function getSelectedRect(
 
     if (index !== 0) {
       minX = Math.min(minX, bounds.left);
-      maxX = Math.max(maxX, bounds.right);
       minY = Math.min(minY, bounds.top);
+      maxX = Math.max(maxX, bounds.right);
       maxY = Math.max(maxY, bounds.bottom);
     }
 
