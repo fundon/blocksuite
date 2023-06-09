@@ -1,5 +1,5 @@
-import type { SurfaceViewport } from '@blocksuite/phasor';
-import { Bound, getCommonBound } from '@blocksuite/phasor';
+import { type SurfaceViewport } from '@blocksuite/phasor';
+import { Bound } from '@blocksuite/phasor';
 import type { Disposable } from '@blocksuite/store';
 import { computePosition, flip, offset } from '@floating-ui/dom';
 import { css, html } from 'lit';
@@ -35,27 +35,48 @@ export function getSelectedRect(
   if (selected.length === 0) {
     return new DOMRect(0, 0, 0, 0);
   }
-  const rects = selected.map(selectable => {
-    const { x, y, width, height } = getSelectionBoxBound(
-      viewport,
-      getXYWH(selectable)
-    );
 
-    return {
-      x,
-      y,
-      w: width,
-      h: height,
-    };
-  });
+  if (selected.length === 1) {
+    return getSelectionBoxBound(viewport, selected[0].xywh);
+  }
 
-  const commonBound = getCommonBound(rects);
-  return new DOMRect(
-    commonBound?.x,
-    commonBound?.y,
-    commonBound?.w,
-    commonBound?.h
-  );
+  // TODO: should get the points from the real `Path2d`
+  return selected.reduce((bounds, selectable, index) => {
+    const rect = getSelectionBoxBound(viewport, selectable.xywh);
+    const rotate = isTopLevelBlock(selectable) ? 0 : selectable.rotate ?? 0;
+
+    const cx = (rect.left + rect.right) / 2;
+    const cy = (rect.top + rect.bottom) / 2;
+
+    const matrix = new DOMMatrix()
+      .translateSelf(cx, cy)
+      .rotateSelf(rotate)
+      .translateSelf(-cx, -cy);
+
+    const a = new DOMPoint(rect.left, rect.top).matrixTransform(matrix);
+    const b = new DOMPoint(rect.right, rect.top).matrixTransform(matrix);
+    const c = new DOMPoint(rect.right, rect.bottom).matrixTransform(matrix);
+    const d = new DOMPoint(rect.left, rect.bottom).matrixTransform(matrix);
+
+    let minX = Math.min(a.x, b.x, c.x, d.x);
+    let maxX = Math.max(a.x, b.x, c.x, d.x);
+    let minY = Math.min(a.y, b.y, c.y, d.y);
+    let maxY = Math.max(a.y, b.y, c.y, d.y);
+
+    if (index !== 0) {
+      minX = Math.min(minX, bounds.left);
+      maxX = Math.max(maxX, bounds.right);
+      minY = Math.min(minY, bounds.top);
+      maxY = Math.max(maxY, bounds.bottom);
+    }
+
+    bounds.x = minX;
+    bounds.y = minY;
+    bounds.width = maxX - minX;
+    bounds.height = maxY - minY;
+
+    return bounds;
+  }, new DOMRect(0, 0, 0, 0));
 }
 
 export function getSelectableBounds(selected: Selectable[]): Map<
