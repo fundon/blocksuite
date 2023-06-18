@@ -29,8 +29,11 @@ import {
   stopPropagation,
 } from '../utils.js';
 import type { EdgelessComponentToolbar } from './component-toolbar/component-toolbar.js';
-import type { HandleDirection } from './resize-handles.js';
-import { ResizeHandles, type ResizeMode } from './resize-handles.js';
+import {
+  type HandleDirection,
+  ResizeHandles,
+  type ResizeMode,
+} from './resize-handles.js';
 import { HandleResizeManager } from './resize-manager.js';
 import { SingleConnectorHandles } from './single-connector-handles.js';
 import {
@@ -620,7 +623,7 @@ export class EdgelessSelectedRect extends WithDisposable(LitElement) {
       </div>
       <edgeless-component-toolbar
         .page=${page}
-        .slogs=${slots}
+        .slots=${slots}
         .surface=${surface}
         .selected=${selected}
         .selectionState=${state}
