@@ -222,3 +222,17 @@ export function getTooltipWithShortcut(tip: string, shortcut: string) {
   return html`<span>${tip}</span
     ><span style="margin-left: 10px;">(${shortcut})</span>`;
 }
+
+export function normalizeAngle(angle: number) {
+  // if (angle < 0) {
+  //   return angle + 360;
+  // }
+  // if (angle >= 360) {
+  //   return angle - 360;
+  // }
+  // return angle;
+
+  if (angle < 0) angle += 360;
+  angle %= 360;
+  return angle;
+}
