@@ -40,10 +40,10 @@ export function getSelectedRect(selected: Selectable[]): DOMRect {
 
   // TODO: should get the points from the real `Path2d`
   return selected.reduce((bounds, selectable, index) => {
+    const rotate = isTopLevelBlock(selectable) ? 0 : selectable.rotate ?? 0;
     const [x, y, w, h] = deserializeXYWH(selectable.xywh);
     const rect = new DOMRect(x, y, w, h);
     let quad = DOMQuad.fromRect(rect);
-    const rotate = isTopLevelBlock(selectable) ? 0 : selectable.rotate ?? 0;
 
     if (rotate) {
       const cx = (rect.left + rect.right) / 2;
