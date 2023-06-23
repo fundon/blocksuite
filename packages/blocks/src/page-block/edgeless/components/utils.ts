@@ -42,44 +42,39 @@ export function getSelectedRect(selected: Selectable[]): DOMRect {
   return selected.reduce((bounds, selectable, index) => {
     const [x, y, w, h] = deserializeXYWH(selectable.xywh);
     const rect = new DOMRect(x, y, w, h);
+    let quad = DOMQuad.fromRect(rect);
     const rotate = isTopLevelBlock(selectable) ? 0 : selectable.rotate ?? 0;
-    // a, b, c, d
-    let a = new DOMPoint(rect.left, rect.top);
-    let b = new DOMPoint(rect.right, rect.top);
-    let c = new DOMPoint(rect.right, rect.bottom);
-    let d = new DOMPoint(rect.left, rect.bottom);
 
     if (rotate) {
-      const cx = (a.x + c.x) / 2;
-      const cy = (a.y + c.y) / 2;
+      const cx = (rect.left + rect.right) / 2;
+      const cy = (rect.top + rect.bottom) / 2;
 
       const matrix = new DOMMatrix()
         .translateSelf(cx, cy)
         .rotateSelf(rotate)
         .translateSelf(-cx, -cy);
 
-      a = a.matrixTransform(matrix);
-      b = b.matrixTransform(matrix);
-      c = c.matrixTransform(matrix);
-      d = d.matrixTransform(matrix);
+      quad = new DOMQuad(
+        new DOMPoint(rect.left, rect.top).matrixTransform(matrix),
+        new DOMPoint(rect.right, rect.top).matrixTransform(matrix),
+        new DOMPoint(rect.right, rect.bottom).matrixTransform(matrix),
+        new DOMPoint(rect.left, rect.bottom).matrixTransform(matrix)
+      );
     }
 
-    let minX = Math.min(a.x, b.x, c.x, d.x);
-    let maxX = Math.max(a.x, b.x, c.x, d.x);
-    let minY = Math.min(a.y, b.y, c.y, d.y);
-    let maxY = Math.max(a.y, b.y, c.y, d.y);
+    let { left, top, right, bottom } = quad.getBounds();
 
     if (index !== 0) {
-      minX = Math.min(minX, bounds.left);
-      minY = Math.min(minY, bounds.top);
-      maxX = Math.max(maxX, bounds.right);
-      maxY = Math.max(maxY, bounds.bottom);
+      left = Math.min(left, bounds.left);
+      top = Math.min(top, bounds.top);
+      right = Math.max(right, bounds.right);
+      bottom = Math.max(bottom, bounds.bottom);
     }
 
-    bounds.x = minX;
-    bounds.y = minY;
-    bounds.width = maxX - minX;
-    bounds.height = maxY - minY;
+    bounds.x = left;
+    bounds.y = top;
+    bounds.width = right - left;
+    bounds.height = bottom - top;
 
     return bounds;
   }, new DOMRect());
