@@ -156,7 +156,7 @@ export function stopPropagation(event: Event) {
 export function getCursorMode(edgelessTool: EdgelessTool) {
   switch (edgelessTool.type) {
     case 'default':
-      return edgelessTool.cursor ?? 'default';
+      return 'default';
     case 'pan':
       return edgelessTool.panning ? 'grabbing' : 'grab';
     case 'brush':
