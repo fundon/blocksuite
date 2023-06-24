@@ -518,6 +518,16 @@ export class EdgelessSelectedRect extends WithDisposable(LitElement) {
     _selectedRect.style.height = `${height}px`;
   }
 
+  private _showToolbar() {
+    this._componentToolbar.selectionState = this.state;
+    this._componentToolbar.selected = this.state.selected;
+    this._componentToolbar.setAttribute('data-show', '');
+  }
+
+  private _hideToolbar() {
+    this._componentToolbar?.removeAttribute('data-show');
+  }
+
   override firstUpdated() {
     const { _disposables, slots } = this;
 
@@ -530,27 +540,29 @@ export class EdgelessSelectedRect extends WithDisposable(LitElement) {
     _disposables.add(
       slots.selectedRectUpdated.on(action => {
         const {
+          _resizeManager,
           _selectedRect,
           _rotate,
-          _resizeManager,
+          resizeMode,
           zoom,
           surface,
           state: { selected },
         } = this;
+        const rect = getSelectedRect(selected);
 
         switch (action.type) {
-          case 'drag': {
-            const { delta, dragging } = action;
+          case 'move': {
+            const { dragging } = action;
+
             if (dragging) {
-              const rect = _resizeManager.updateRect({
-                x: delta.x / zoom,
-                y: delta.y / zoom,
-              });
+              _resizeManager.updateState(resizeMode, _rotate, zoom, rect);
+
+              // _resizeManager.updateRect(action.delta, dragging);
+
               const [x, y] = surface.toViewCoord(rect.x, rect.y);
               _selectedRect.style.setProperty('--rotate', `${_rotate}deg`);
               _selectedRect.style.setProperty('--left', `${x}px`);
               _selectedRect.style.setProperty('--top', `${y}px`);
-
               this._computeComponentToolbarPosition();
             } else {
               _resizeManager.updateBounds(getSelectableBounds(selected));
@@ -559,7 +571,6 @@ export class EdgelessSelectedRect extends WithDisposable(LitElement) {
           }
           case 'resize': {
             // frame resize
-            const rect = getSelectedRect(selected);
             const width = rect.width * zoom;
             const height = rect.height * zoom;
             this._selectedRect.style.width = `${width}px`;
@@ -567,8 +578,6 @@ export class EdgelessSelectedRect extends WithDisposable(LitElement) {
             break;
           }
         }
-
-        // this.requestUpdate();
       })
     );
     _disposables.add(
@@ -585,16 +594,6 @@ export class EdgelessSelectedRect extends WithDisposable(LitElement) {
     });
 
     this._updateSelectedRect();
-  }
-
-  _showToolbar() {
-    this._componentToolbar.selectionState = this.state;
-    this._componentToolbar.selected = this.state.selected;
-    this._componentToolbar.setAttribute('data-show', '');
-  }
-
-  _hideToolbar() {
-    this._componentToolbar?.removeAttribute('data-show');
   }
 
   override updated(changedProperties: Map<string, unknown>) {

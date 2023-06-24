@@ -553,3 +553,29 @@ export function xywhArrayToObject(element: TopLevelBlockModel) {
     h,
   };
 }
+
+export function getElementQuadBounds(element: Selectable) {
+  const rotate = isTopLevelBlock(element) ? 0 : element.rotate ?? 0;
+  const [x, y, w, h] = deserializeXYWH(element.xywh);
+  const rect = new DOMRect(x, y, w, h);
+  let quad = DOMQuad.fromRect(rect);
+
+  if (rotate) {
+    const cx = (rect.left + rect.right) / 2;
+    const cy = (rect.top + rect.bottom) / 2;
+
+    const matrix = new DOMMatrix()
+      .translateSelf(cx, cy)
+      .rotateSelf(rotate)
+      .translateSelf(-cx, -cy);
+
+    quad = new DOMQuad(
+      new DOMPoint(rect.left, rect.top).matrixTransform(matrix),
+      new DOMPoint(rect.right, rect.top).matrixTransform(matrix),
+      new DOMPoint(rect.right, rect.bottom).matrixTransform(matrix),
+      new DOMPoint(rect.left, rect.bottom).matrixTransform(matrix)
+    );
+  }
+
+  return quad.getBounds();
+}

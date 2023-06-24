@@ -4,6 +4,7 @@ import { Point } from '../../__internal__/utils/rect.js';
 import type { Alignable } from '../../__internal__/utils/types.js';
 import { type NoteBlockModel } from '../../note-block/note-model.js';
 import type { EdgelessPageBlockComponent } from './edgeless-page-block.js';
+import { getElementQuadBounds } from './utils.js';
 
 interface Distance {
   absXDistance: number;
@@ -51,7 +52,7 @@ export class EdgelessSnapManager extends Overlay {
 
     this._alignableBounds = [];
     (<Alignable[]>[...notes, ...phasorElements]).forEach(alignable => {
-      const bound = Bound.deserialize(alignable.xywh);
+      const bound = Bound.fromDOMRect(getElementQuadBounds(alignable));
       if (
         viewportBounds.isIntersectWithBound(bound) &&
         !alignables.includes(alignable)
@@ -61,7 +62,7 @@ export class EdgelessSnapManager extends Overlay {
     });
 
     return alignables.reduce((prev, element) => {
-      return prev.unite(Bound.deserialize(element.xywh));
+      return prev.unite(Bound.fromDOMRect(getElementQuadBounds(element)));
     }, Bound.deserialize(alignables[0].xywh));
   }
 
