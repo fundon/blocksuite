@@ -85,7 +85,7 @@ export function getSelectableBounds(selected: Selectable[]): Map<
       bound = new Bound(s.x, s.y, s.w, s.h);
       flip.x = s.flipX ?? 1;
       flip.y = s.flipY ?? 1;
-      rotate = s.rotate;
+      rotate = s.rotate ?? 0;
     }
 
     bounds.set(s.id, {
