@@ -42,6 +42,7 @@ import {
   getSelectableBounds,
   getSelectedRect,
   normalizeAngle,
+  rotateResizeCursor,
 } from './utils.js';
 
 @customElement('edgeless-selected-rect')
@@ -420,15 +421,10 @@ export class EdgelessSelectedRect extends WithDisposable(LitElement) {
         this._cursorRotate += angle;
         cursor = generateCursorUrl(this._cursorRotate).toString();
       } else {
-        // TODO: optimized cursor
         if (this.resizeMode === 'edge') {
           cursor = 'ew';
         } else {
-          if ((angle >= 0 && angle < 90) || (angle >= 180 && angle < 270)) {
-            cursor = 'nesw';
-          } else {
-            cursor = 'nwse';
-          }
+          cursor = rotateResizeCursor((angle * Math.PI) / 180);
         }
         cursor += '-resize';
       }
