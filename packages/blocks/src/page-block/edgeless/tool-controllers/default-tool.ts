@@ -480,7 +480,13 @@ export class DefaultToolController extends EdgelessToolController<DefaultTool> {
         });
 
         // FIXME: we need to add align offset
-        this._forceUpdateSelection(e.delta, true);
+        this._forceUpdateSelection(
+          {
+            x: e.delta.x / zoom,
+            y: e.delta.y / zoom,
+          },
+          true
+        );
         break;
       }
       case DefaultModeDragType.NativeEditing: {
@@ -524,7 +530,7 @@ export class DefaultToolController extends EdgelessToolController<DefaultTool> {
     this._dragLastPos = { x: 0, y: 0 };
     this._selectedBounds = [];
     this._edgeless.snap.cleanupAlignables();
-    this._forceUpdateSelection(e.delta, false);
+    this._forceUpdateSelection({ x: 0, y: 0 }, false);
   }
 
   onContainerMouseMove(e: PointerEventState) {
